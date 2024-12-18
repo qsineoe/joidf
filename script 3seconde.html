@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تشغيل فيديوهات متزامنة</title>
+    <style>
+        video, iframe {
+            width: 100%;
+            max-width: 560px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- فيديو يوتيوب -->
+    <iframe id="youtubeVideo" width="560" height="315" src="https://www.youtube.com/embed/mCGu6MfLCDs?enablejsapi=1" title="YouTube video player" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+    <!-- فيديو MP4 -->
+    <video id="mp4Video" controls autoplay>
+        <source src="https://firebasestorage.googleapis.com/v0/b/project-2815293220407416835.appspot.com/o/10.12%2Fasali%20S01E15.mp4?alt=media&token=90170d89-80fe-41dc-8fa7-49d711a35e9d" type="video/mp4">
+        متصفحك لا يدعم تشغيل الفيديو.
+    </video>
+
+    <script>
+        const youtubeVideo = document.getElementById('youtubeVideo');
+        const mp4Video = document.getElementById('mp4Video');
+
+        // إضافة listener لتشغيل الفيديوهات معًا
+        mp4Video.addEventListener('play', () => {
+            youtubeVideo.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        });
+
+        mp4Video.addEventListener('pause', () => {
+            youtubeVideo.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+        });
+
+        window.addEventListener("message", function(event) {
+            if (event.origin === "https://www.youtube.com") {
+                if (event.data && event.data.event === "onStateChange") {
+                    // تحقق من الحالة
+                    if (event.data.info === 0) { // 0 يعني أن الفيديو قد انتهى
+                        mp4Video.pause();
+                    }
+                }
+            }
+        });
+
+        // تشغيل الفيديو MP4 عند تشغيل الفيديو من يوتيوب
+        function onYouTubePlayerAPIReady() {
+            const player = new YT.Player('youtubeVideo', {
+                events: {
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+                mp4Video.play();
+            } else if (event.data === YT.PlayerState.PAUSED) {
+                mp4Video.pause();
+            }
+        }
+    </script>
+
+    <script src="https://www.youtube.com/iframe_api"></script> <!-- إضافة مكتبة يوتيوب API -->
+
+</body>
+</html>
